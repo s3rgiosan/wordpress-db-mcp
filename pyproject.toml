@@ -1,0 +1,66 @@
+[project]
+name = "wordpress-db-mcp"
+version = "1.0.0"
+description = "MCP server for read-only WordPress MySQL/MariaDB database exploration"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Sérgio Santos", email = "me@s3rgiosan.com"},
+]
+keywords = ["mcp", "wordpress", "mysql", "database", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]>=1.0.0",
+    "aiomysql>=0.2.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/s3rgiosan/wordpress-db-mcp"
+Repository = "https://github.com/s3rgiosan/wordpress-db-mcp"
+Issues = "https://github.com/s3rgiosan/wordpress-db-mcp/issues"
+
+[project.scripts]
+wordpress-db-mcp = "wordpress_db_mcp:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
