@@ -201,6 +201,48 @@ Get all meta key-value pairs for a user. Filter by `meta_key`. Note: In multisit
 
 Get all meta key-value pairs for a comment. Filter by `meta_key`.
 
+### Post Relationships (WP Content Connect)
+
+These tools query relationships created by the [WP Content Connect](https://github.com/10up/wp-content-connect) library.
+
+#### wp_get_connected_posts
+
+Get posts connected to a post via the `post_to_post` table. Supports filtering by relationship name and direction (`from`, `to`, or `any`).
+
+#### wp_get_connected_users
+
+Get users connected to a post via the `post_to_user` table. Supports filtering by relationship name.
+
+#### wp_get_user_connected_posts
+
+Get posts connected to a user via the `post_to_user` table (reverse lookup). Supports filtering by relationship name.
+
+#### wp_list_connected_posts
+
+List all post connections for a given relationship name. Returns all connection pairs with both posts' details (ID, title, type) and the relationship order.
+
+### Shadow Taxonomy Relationships
+
+These tools support the "shadow taxonomy" pattern where posts are related through taxonomy terms that store the source post ID in term meta.
+
+#### wp_get_shadow_related_posts
+
+Find posts related via a shadow taxonomy. Given a source post, finds all terms where the term meta matches the post ID, then returns all posts assigned to those terms.
+
+Parameters:
+
+- `post_id`: Source post ID
+- `taxonomy`: Shadow taxonomy name (e.g., `speaker_shadow`)
+- `meta_key`: Term meta key storing the post ID (e.g., `shadow_post_id`)
+
+#### wp_get_shadow_source_post
+
+Get the source post for a shadow term (reverse lookup). Given a term ID, finds the post whose ID is stored in the term's meta.
+
+#### wp_list_shadow_posts
+
+List all posts using a shadow taxonomy relationship. Returns all posts assigned to shadow terms, with term info (ID, name) and source post details (ID, title, type).
+
 ## Usage Examples
 
 Once configured, just ask questions in natural language. The AI will automatically use the appropriate tools.
@@ -232,6 +274,32 @@ Once configured, just ask questions in natural language. The AI will automatical
 - "Show me the 5 most recent users"
 - "Count posts by post type"
 
+### Content connections (WP Content Connect)
+
+For sites using the [WP Content Connect](https://github.com/10up/wp-content-connect) library:
+
+- "What posts are connected to post ID 42?"
+- "Find all posts connected to post 15 via the 'related_articles' relationship"
+- "Show posts connected FROM post 100 (where it's the source)"
+- "Show posts connected TO post 100 (where it's the target)"
+- "What users are connected to post ID 50?"
+- "Find all speakers connected to this event post"
+- "What posts is user ID 5 connected to?"
+- "Show all events that user 12 is associated with"
+- "List all posts using the 'related_articles' relationship"
+- "Show me all connections for the 'speakers' relationship"
+
+### Shadow taxonomy relationships
+
+For sites using shadow taxonomies (where posts are related through taxonomy terms that store post IDs in term meta):
+
+- "Find all sessions related to speaker post ID 25 using the 'speaker_shadow' taxonomy"
+- "What posts are related to post 100 via shadow taxonomy 'event_shadow' with meta key 'shadow_post_id'?"
+- "Get the source post for shadow term ID 150"
+- "Which speaker post does term ID 42 represent?"
+- "List all posts using the 'speaker_shadow' taxonomy with meta key 'shadow_post_id'"
+- "Show me all relationships in the 'event_shadow' shadow taxonomy"
+
 ## Multisite
 
 For multisite installations, pass `site_id` to any tool:
@@ -254,7 +322,6 @@ For WooCommerce, the schema will include tables like:
 - `wp_woocommerce_*` tables
 
 Use `wp_query` to explore any table directly.
-
 
 ## License
 
