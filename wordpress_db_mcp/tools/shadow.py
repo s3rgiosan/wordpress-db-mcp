@@ -287,3 +287,72 @@ def register_shadow_tools(mcp):
             },
             indent=2,
         )
+
+    @mcp.tool(
+        name="wp_list_shadow_taxonomies",
+        annotations={
+            "title": "List Shadow Taxonomies",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+    )
+    async def wp_list_shadow_taxonomies(
+        site_id: int | None = None,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
+        """Discover shadow taxonomies in the WordPress database.
+
+        Shadow taxonomies are identified by finding taxonomies where terms have
+        meta values that reference valid post IDs. This queries term_taxonomy
+        joined with termmeta and posts to find potential shadow taxonomy patterns.
+
+        Returns taxonomies along with the meta keys used and term counts.
+
+        Args:
+            site_id: Multisite blog ID (optional).
+            format: Output format - json or csv (default json).
+
+        Returns:
+            str: Shadow taxonomies with meta keys and counts in JSON or CSV.
+        """
+        pool, prefix = get_pool_and_prefix()
+        p = resolve_prefix(prefix, site_id)
+
+        # Find taxonomies where terms have meta that references valid post IDs
+        # This identifies the shadow taxonomy pattern
+        sql = (
+            f"SELECT "
+            f"tt.taxonomy, "
+            f"tm.meta_key, "
+            f"COUNT(DISTINCT t.term_id) as term_count, "
+            f"COUNT(DISTINCT p.ID) as linked_post_count "
+            f"FROM `{p}term_taxonomy` tt "
+            f"JOIN `{p}terms` t ON tt.term_id = t.term_id "
+            f"JOIN `{p}termmeta` tm ON t.term_id = tm.term_id "
+            f"JOIN `{p}posts` p ON CAST(tm.meta_value AS UNSIGNED) = p.ID "
+            f"WHERE tm.meta_value REGEXP '^[0-9]+$' "
+            f"AND p.post_status != 'trash' "
+            f"GROUP BY tt.taxonomy, tm.meta_key "
+            f"HAVING term_count > 0 "
+            f"ORDER BY term_count DESC"
+        )
+
+        try:
+            rows, _ = await query(pool, sql)
+        except Exception as e:
+            return handle_db_exception(e)
+
+        cleaned = clean_rows(rows)
+
+        if format.lower() == "csv":
+            return rows_to_csv(cleaned)
+
+        return json.dumps(
+            {
+                "shadow_taxonomies": cleaned,
+            },
+            indent=2,
+        )

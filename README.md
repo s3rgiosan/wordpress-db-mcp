@@ -205,6 +205,10 @@ Get all meta key-value pairs for a comment. Filter by `meta_key`.
 
 These tools query relationships created by the [WP Content Connect](https://github.com/10up/wp-content-connect) library.
 
+#### wp_list_connection_names
+
+Discover all relationship names registered in WP Content Connect. Queries both `post_to_post` and `post_to_user` tables to list distinct relationship names with their connection counts. Useful for exploring what relationships exist before querying specific connections.
+
 #### wp_get_connected_posts
 
 Get posts connected to a post via the `post_to_post` table. Supports filtering by relationship name and direction (`from`, `to`, or `any`).
@@ -224,6 +228,10 @@ List all post connections for a given relationship name. Returns all connection 
 ### Shadow Taxonomy Relationships
 
 These tools support the "shadow taxonomy" pattern where posts are related through taxonomy terms that store the source post ID in term meta.
+
+#### wp_list_shadow_taxonomies
+
+Discover shadow taxonomies in the database. Identifies taxonomies where terms have meta values that reference valid post IDs. Returns taxonomy name, meta key used, term count, and linked post count. Useful for exploring what shadow relationships exist.
 
 #### wp_get_shadow_related_posts
 
@@ -278,6 +286,8 @@ Once configured, just ask questions in natural language. The AI will automatical
 
 For sites using the [WP Content Connect](https://github.com/10up/wp-content-connect) library:
 
+- "What Content Connect relationships are defined in the database?"
+- "List all connection types/relationship names"
 - "What posts are connected to post ID 42?"
 - "Find all posts connected to post 15 via the 'related_articles' relationship"
 - "Show posts connected FROM post 100 (where it's the source)"
@@ -293,6 +303,8 @@ For sites using the [WP Content Connect](https://github.com/10up/wp-content-conn
 
 For sites using shadow taxonomies (where posts are related through taxonomy terms that store post IDs in term meta):
 
+- "What shadow taxonomies exist in the database?"
+- "Discover all shadow taxonomy relationships"
 - "Find all sessions related to speaker post ID 25 using the 'speaker_shadow' taxonomy"
 - "What posts are related to post 100 via shadow taxonomy 'event_shadow' with meta key 'shadow_post_id'?"
 - "Get the source post for shadow term ID 150"

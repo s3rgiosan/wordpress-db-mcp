@@ -355,3 +355,77 @@ def register_connection_tools(mcp):
             },
             indent=2,
         )
+
+    @mcp.tool(
+        name="wp_list_connection_names",
+        annotations={
+            "title": "List Content Connect Relationship Names",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+    )
+    async def wp_list_connection_names(
+        site_id: int | None = None,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
+        """List all relationship names registered in WP Content Connect.
+
+        Queries the post_to_post and post_to_user tables to find all distinct
+        relationship names with their connection counts. Useful for discovering
+        what relationships exist before querying specific connections.
+
+        Args:
+            site_id: Multisite blog ID (optional).
+            format: Output format - json or csv (default json).
+
+        Returns:
+            str: Relationship names with counts in JSON or CSV.
+        """
+        pool, prefix = get_pool_and_prefix()
+        p = resolve_prefix(prefix, site_id)
+
+        # Query post_to_post relationships
+        post_to_post_sql = (
+            f"SELECT name, COUNT(*) as connection_count, 'post_to_post' as table_type "
+            f"FROM `{p}post_to_post` "
+            f"GROUP BY name "
+            f"ORDER BY connection_count DESC"
+        )
+
+        # Query post_to_user relationships
+        post_to_user_sql = (
+            f"SELECT name, COUNT(*) as connection_count, 'post_to_user' as table_type "
+            f"FROM `{p}post_to_user` "
+            f"GROUP BY name "
+            f"ORDER BY connection_count DESC"
+        )
+
+        post_to_post_rows = []
+        post_to_user_rows = []
+
+        try:
+            post_to_post_rows, _ = await query(pool, post_to_post_sql)
+        except Exception:
+            post_to_post_rows = []  # Table might not exist
+
+        try:
+            post_to_user_rows, _ = await query(pool, post_to_user_sql)
+        except Exception:
+            post_to_user_rows = []  # Table might not exist
+
+        cleaned_post_to_post = clean_rows(post_to_post_rows)
+        cleaned_post_to_user = clean_rows(post_to_user_rows)
+
+        if format.lower() == "csv":
+            return rows_to_csv(cleaned_post_to_post + cleaned_post_to_user)
+
+        return json.dumps(
+            {
+                "post_to_post": cleaned_post_to_post,
+                "post_to_user": cleaned_post_to_user,
+            },
+            indent=2,
+        )

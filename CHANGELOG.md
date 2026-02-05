@@ -26,11 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `wp_get_user_meta` - Get user meta data
   - `wp_get_comment_meta` - Get comment meta data
 - Post relationship query tools for WP Content Connect library:
+  - `wp_list_connection_names` - Discover all relationship names in post_to_post and post_to_user tables
   - `wp_get_connected_posts` - Query posts connected via `post_to_post` table
   - `wp_get_connected_users` - Query users connected to a post via `post_to_user` table
   - `wp_get_user_connected_posts` - Query posts connected to a user (reverse lookup)
   - `wp_list_connected_posts` - List all post connections for a given relationship name
 - Shadow taxonomy relationship tools:
+  - `wp_list_shadow_taxonomies` - Discover shadow taxonomies by finding terms with post ID references in meta
   - `wp_get_shadow_related_posts` - Find posts related via shadow taxonomy
   - `wp_get_shadow_source_post` - Get the source post for a shadow term
   - `wp_list_shadow_posts` - List all posts using a shadow taxonomy relationship
