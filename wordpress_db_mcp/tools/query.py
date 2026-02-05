@@ -30,7 +30,7 @@ def register_query_tools(mcp):
         sql: str,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Execute a read-only SQL query against the WordPress database.
 
@@ -86,7 +86,7 @@ def register_query_tools(mcp):
         site_id: int | None = None,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Search for posts by title or content.
 
@@ -108,9 +108,7 @@ def register_query_tools(mcp):
         p = resolve_prefix(prefix, site_id)
 
         # Escape LIKE wildcards in user input, then wrap with %
-        search_term = (
-            search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        )
+        search_term = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         search_pattern = f"%{search_term}%"
 
         sql = (

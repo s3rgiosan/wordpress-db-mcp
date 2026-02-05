@@ -35,9 +35,7 @@ class DescribeTableInput(BaseModel):
         max_length=200,
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
 
 
 class GetSchemaInput(BaseModel):
@@ -46,9 +44,7 @@ class GetSchemaInput(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
     include_plugins: bool = Field(
         default=False,
         description="Include non-core WordPress tables (plugin tables).",

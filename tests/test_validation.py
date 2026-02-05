@@ -128,9 +128,7 @@ class TestValidateSelectOnly:
         """Block comments should be stripped before validation."""
         # This should fail because after stripping comments, it tries DROP
         with pytest.raises(ValueError):
-            validate_select_only(
-                "SELECT /* comment */ * FROM wp_posts; /* */ DROP TABLE x"
-            )
+            validate_select_only("SELECT /* comment */ * FROM wp_posts; /* */ DROP TABLE x")
 
     def test_strip_line_comments(self):
         """Line comments should be stripped."""
@@ -148,9 +146,7 @@ class TestValidateSelectOnly:
 
     def test_subquery_allowed(self):
         """Subqueries in SELECT should be allowed."""
-        validate_select_only(
-            "SELECT * FROM wp_posts WHERE ID IN (SELECT post_id FROM wp_postmeta)"
-        )
+        validate_select_only("SELECT * FROM wp_posts WHERE ID IN (SELECT post_id FROM wp_postmeta)")
 
     def test_case_insensitive(self):
         """Validation should be case insensitive."""

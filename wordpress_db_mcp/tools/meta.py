@@ -78,7 +78,7 @@ def register_meta_tools(mcp):
         meta_key: str | None = None,
         site_id: int | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Get all meta key-value pairs for a WordPress post.
 
@@ -119,7 +119,7 @@ def register_meta_tools(mcp):
         user_id: int,
         meta_key: str | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Get all meta key-value pairs for a WordPress user.
 
@@ -162,7 +162,7 @@ def register_meta_tools(mcp):
         meta_key: str | None = None,
         site_id: int | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Get all meta key-value pairs for a WordPress comment.
 

@@ -26,9 +26,7 @@ class QueryInput(BaseModel):
         ge=1,
         le=MAX_ROWS,
     )
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
 
     @field_validator("sql")
     @classmethod
@@ -60,6 +58,4 @@ class SearchPostsInput(BaseModel):
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
     limit: int = Field(default=100, ge=1, le=MAX_ROWS)
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")

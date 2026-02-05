@@ -35,7 +35,7 @@ def register_schema_tools(mcp):
     async def wp_list_tables(
         site_id: int | None = None,
         filter: str | None = None,
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """List all tables in the WordPress database.
 
@@ -90,7 +90,7 @@ def register_schema_tools(mcp):
         table: str,
         site_id: int | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Show column definitions, keys, and indexes for a table.
 
@@ -120,9 +120,7 @@ def register_schema_tools(mcp):
             )
             cols, _ = await query(pool, col_sql, (DB_NAME, resolved_table))
             if not cols:
-                return error_response(
-                    f"Table '{resolved_table}' not found.", "table_not_found"
-                )
+                return error_response(f"Table '{resolved_table}' not found.", "table_not_found")
 
             # Indexes
             idx_sql = (
@@ -160,7 +158,7 @@ def register_schema_tools(mcp):
         site_id: int | None = None,
         include_plugins: bool = False,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Generate a complete schema of the WordPress database.
 
@@ -187,9 +185,7 @@ def register_schema_tools(mcp):
                 "WHERE TABLE_SCHEMA = %s AND TABLE_NAME LIKE %s "
                 "ORDER BY TABLE_NAME"
             )
-            table_rows, _ = await query(
-                pool, tables_sql, (DB_NAME, f"{site_prefix}%"), limit=500
-            )
+            table_rows, _ = await query(pool, tables_sql, (DB_NAME, f"{site_prefix}%"), limit=500)
             all_tables = [r["TABLE_NAME"] for r in table_rows]
 
             if not include_plugins:
@@ -217,9 +213,7 @@ def register_schema_tools(mcp):
                 f"WHERE TABLE_SCHEMA = %s AND TABLE_NAME IN ({table_placeholders}) "
                 f"ORDER BY TABLE_NAME, ORDINAL_POSITION"
             )
-            all_cols, _ = await query(
-                pool, col_sql, (DB_NAME, *all_tables), limit=10000
-            )
+            all_cols, _ = await query(pool, col_sql, (DB_NAME, *all_tables), limit=10000)
 
             # Batch query: fetch all indexes for all tables at once
             idx_sql = (
@@ -228,12 +222,10 @@ def register_schema_tools(mcp):
                 f"WHERE TABLE_SCHEMA = %s AND TABLE_NAME IN ({table_placeholders}) "
                 f"ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX"
             )
-            all_idxs, _ = await query(
-                pool, idx_sql, (DB_NAME, *all_tables), limit=10000
-            )
+            all_idxs, _ = await query(pool, idx_sql, (DB_NAME, *all_tables), limit=10000)
 
             # Group columns and indexes by table
-            schema = {table: {"columns": [], "indexes": []} for table in all_tables}
+            schema: dict = {table: {"columns": [], "indexes": []} for table in all_tables}
 
             for col in clean_rows(all_cols):
                 table_name = col.pop("TABLE_NAME")

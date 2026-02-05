@@ -36,9 +36,7 @@ def get_pool_and_prefix() -> tuple[aiomysql.Pool, str]:
         RuntimeError: If the server is not yet initialized (pool is None).
     """
     if _pool is None:
-        raise RuntimeError(
-            "Database connection not initialized. Server may still be starting up."
-        )
+        raise RuntimeError("Database connection not initialized. Server may still be starting up.")
     return _pool, _prefix
 
 
@@ -111,8 +109,9 @@ async def _detect_prefix(pool: aiomysql.Pool) -> str:
         rows = await cur.fetchall()
         for (table_name,) in rows:
             # e.g. "wp_options" -> prefix "wp_"
-            if table_name.endswith("options"):
-                return table_name[: -len("options")]
+            name: str = str(table_name)
+            if name.endswith("options"):
+                return name[: -len("options")]
     return "wp_"
 
 
@@ -141,13 +140,9 @@ async def query(
     try:
         async with pool.acquire() as conn, conn.cursor(aiomysql.DictCursor) as cur:
             # Enforce timeout at MySQL level (parameterized to prevent SQL injection)
-            await cur.execute(
-                "SET SESSION MAX_EXECUTION_TIME = %s", (QUERY_TIMEOUT * 1000,)
-            )
+            await cur.execute("SET SESSION MAX_EXECUTION_TIME = %s", (QUERY_TIMEOUT * 1000,))
             # Also enforce at Python level with buffer
-            await asyncio.wait_for(
-                cur.execute(sql, params), timeout=QUERY_TIMEOUT + 5
-            )
+            await asyncio.wait_for(cur.execute(sql, params), timeout=QUERY_TIMEOUT + 5)
             # Fetch one extra to detect if there are more rows
             rows = await cur.fetchmany(limit + 1)
             has_more = len(rows) > limit

@@ -76,9 +76,7 @@ class TestToolSchemas:
 
             # Check that 'ctx' is not in required fields
             required = schema.get("required", [])
-            assert "ctx" not in required, (
-                f"Tool '{tool_name}' has 'ctx' in required fields"
-            )
+            assert "ctx" not in required, f"Tool '{tool_name}' has 'ctx' in required fields"
 
     def test_wp_query_schema(self):
         """wp_query should have sql as required parameter."""

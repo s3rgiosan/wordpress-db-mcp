@@ -26,9 +26,7 @@ class ShadowRelatedPostsInput(BaseModel):
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
     limit: int = Field(default=100, ge=1, le=MAX_ROWS)
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
 
 
 class ShadowSourcePostInput(BaseModel):
@@ -43,9 +41,7 @@ class ShadowSourcePostInput(BaseModel):
         max_length=255,
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
 
 
 class ListShadowPostsInput(BaseModel):
@@ -65,6 +61,4 @@ class ListShadowPostsInput(BaseModel):
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
     limit: int = Field(default=100, ge=1, le=MAX_ROWS)
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")

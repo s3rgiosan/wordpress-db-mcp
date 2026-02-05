@@ -176,7 +176,7 @@ def register_relationship_tools(mcp):
     )
     async def wp_get_relationships(
         site_id: int | None = None,
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Map how WordPress posts, terms, users, and meta are related.
 
@@ -203,9 +203,7 @@ def register_relationship_tools(mcp):
                 "SELECT TABLE_NAME FROM information_schema.TABLES "
                 "WHERE TABLE_SCHEMA = %s AND TABLE_NAME LIKE %s"
             )
-            table_rows, _ = await query(
-                pool, tables_sql, (DB_NAME, f"{site_prefix}%"), limit=500
-            )
+            table_rows, _ = await query(pool, tables_sql, (DB_NAME, f"{site_prefix}%"), limit=500)
             tables = [r["TABLE_NAME"] for r in table_rows]
 
             relationships = build_wp_relationships(site_prefix, tables)

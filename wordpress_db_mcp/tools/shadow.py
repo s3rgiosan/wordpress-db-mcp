@@ -41,7 +41,7 @@ def register_shadow_tools(mcp):
         site_id: int | None = None,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Find posts related via a shadow taxonomy.
 
@@ -153,7 +153,7 @@ def register_shadow_tools(mcp):
         meta_key: str,
         site_id: int | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Get the source post that a shadow term represents.
 
@@ -226,7 +226,7 @@ def register_shadow_tools(mcp):
         site_id: int | None = None,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """List all posts using a shadow taxonomy relationship.
 
@@ -301,7 +301,7 @@ def register_shadow_tools(mcp):
     async def wp_list_shadow_taxonomies(
         site_id: int | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Discover shadow taxonomies in the WordPress database.
 

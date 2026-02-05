@@ -38,7 +38,7 @@ def register_connection_tools(mcp):
         site_id: int | None = None,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Query posts connected via WP Content Connect post_to_post table.
 
@@ -136,7 +136,7 @@ def register_connection_tools(mcp):
         site_id: int | None = None,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Query users connected to a post via WP Content Connect post_to_user table.
 
@@ -210,7 +210,7 @@ def register_connection_tools(mcp):
         site_id: int | None = None,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Query posts connected to a user via WP Content Connect post_to_user table.
 
@@ -282,7 +282,7 @@ def register_connection_tools(mcp):
         site_id: int | None = None,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """List all post connections for a relationship name.
 
@@ -333,19 +333,21 @@ def register_connection_tools(mcp):
         # Transform flat rows into nested structure
         connections = []
         for row in cleaned:
-            connections.append({
-                "from_post": {
-                    "ID": row["from_post_id"],
-                    "post_title": row["from_post_title"],
-                    "post_type": row["from_post_type"],
-                },
-                "to_post": {
-                    "ID": row["to_post_id"],
-                    "post_title": row["to_post_title"],
-                    "post_type": row["to_post_type"],
-                },
-                "order": row["connection_order"],
-            })
+            connections.append(
+                {
+                    "from_post": {
+                        "ID": row["from_post_id"],
+                        "post_title": row["from_post_title"],
+                        "post_type": row["from_post_type"],
+                    },
+                    "to_post": {
+                        "ID": row["to_post_id"],
+                        "post_title": row["to_post_title"],
+                        "post_type": row["to_post_type"],
+                    },
+                    "order": row["connection_order"],
+                }
+            )
 
         return json.dumps(
             {
@@ -369,7 +371,7 @@ def register_connection_tools(mcp):
     async def wp_list_connection_names(
         site_id: int | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """List all relationship names registered in WP Content Connect.
 
@@ -403,8 +405,8 @@ def register_connection_tools(mcp):
             f"ORDER BY connection_count DESC"
         )
 
-        post_to_post_rows = []
-        post_to_user_rows = []
+        post_to_post_rows: list = []
+        post_to_user_rows: list = []
 
         try:
             post_to_post_rows, _ = await query(pool, post_to_post_sql)

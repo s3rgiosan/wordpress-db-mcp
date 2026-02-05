@@ -31,7 +31,7 @@ def register_term_tools(mcp):
         taxonomy: str | None = None,
         site_id: int | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Get all taxonomy terms associated with a WordPress post.
 
@@ -95,7 +95,7 @@ def register_term_tools(mcp):
         site_id: int | None = None,
         limit: int = 100,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """Get all posts associated with a taxonomy term.
 
@@ -171,7 +171,7 @@ def register_term_tools(mcp):
     async def wp_list_taxonomies(
         site_id: int | None = None,
         format: str = "json",
-        ctx: Context = None,
+        ctx: Context | None = None,
     ) -> str:
         """List all taxonomies registered in the WordPress database.
 

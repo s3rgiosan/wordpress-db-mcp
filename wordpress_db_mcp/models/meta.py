@@ -19,9 +19,7 @@ class PostMetaInput(BaseModel):
         max_length=255,
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
 
 
 class UserMetaInput(BaseModel):
@@ -35,9 +33,7 @@ class UserMetaInput(BaseModel):
         description="Filter by meta_key (exact match or SQL LIKE with %%).",
         max_length=255,
     )
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
 
 
 class CommentMetaInput(BaseModel):
@@ -52,6 +48,4 @@ class CommentMetaInput(BaseModel):
         max_length=255,
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")

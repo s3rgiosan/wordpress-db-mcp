@@ -20,9 +20,7 @@ class PostTermsInput(BaseModel):
         max_length=100,
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
 
 
 class TermPostsInput(BaseModel):
@@ -43,9 +41,7 @@ class TermPostsInput(BaseModel):
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
     limit: int = Field(default=100, ge=1, le=MAX_ROWS)
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
 
 
 class ListTaxonomiesInput(BaseModel):
@@ -54,6 +50,4 @@ class ListTaxonomiesInput(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
     site_id: int | None = Field(default=None, description="Multisite blog ID.")
-    format: OutputFormat = Field(
-        default=OutputFormat.JSON, description="Output format."
-    )
+    format: OutputFormat = Field(default=OutputFormat.JSON, description="Output format.")
