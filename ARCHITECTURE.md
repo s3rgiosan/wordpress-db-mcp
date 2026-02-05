@@ -13,16 +13,16 @@ The WordPress Database MCP Server is a [Model Context Protocol (MCP)](https://mo
 │  (Claude, Cursor,   │                       │      Server         │
 │    VS Code, etc.)   │                       │                     │
 └─────────────────────┘                       └──────────┬──────────┘
-                                                         │
-                                                         │ aiomysql
-                                                         │ (async)
-                                                         ▼
-                                              ┌─────────────────────┐
-                                              │                     │
-                                              │  MySQL / MariaDB    │
-                                              │    (WordPress DB)   │
-                                              │                     │
-                                              └─────────────────────┘
+                                                        │
+                                                        │ aiomysql
+                                                        │ (async)
+                                                        ▼
+                                             ┌─────────────────────┐
+                                             │                     │
+                                             │  MySQL / MariaDB    │
+                                             │    (WordPress DB)   │
+                                             │                     │
+                                             └─────────────────────┘
 ```
 
 ## Module Structure
@@ -80,18 +80,13 @@ def validate_select_only(sql: str) -> None:
     """Validate that SQL is read-only. Raises ValueError if not."""
 ```
 
-#### `models.py`
+#### `models/`
 
-Pydantic models for input validation:
+Minimal Pydantic models:
 
-- `OutputFormat`: Enum for JSON/CSV output
-- `ListTablesInput`, `DescribeTableInput`, `GetSchemaInput`
-- `QueryInput`, `SearchPostsInput`
-- `GetPostTermsInput`, `GetTermPostsInput`, `ListTaxonomiesInput`
-- `GetPostMetaInput`, `GetUserMetaInput`, `GetCommentMetaInput`
-- `GetRelationshipsInput`
+- `OutputFormat`: Enum for JSON/CSV output format
 
-All models include field validation (max lengths, allowed values, ranges).
+Tools use individual typed parameters (not Pydantic model objects) for compatibility with MCP clients like Cursor. FastMCP handles parameter validation via type annotations.
 
 #### `utils.py`
 
@@ -163,6 +158,29 @@ Relationships include:
 | `wp_get_user_meta` | Get meta for a user |
 | `wp_get_comment_meta` | Get meta for a comment |
 
+#### `connections.py` - WP Content Connect Tools
+
+Tools for querying relationships created by the [WP Content Connect](https://github.com/10up/wp-content-connect) library:
+
+| Tool | Description |
+|------|-------------|
+| `wp_list_connection_names` | Discover all relationship names |
+| `wp_get_connected_posts` | Get posts connected to a post |
+| `wp_get_connected_users` | Get users connected to a post |
+| `wp_get_user_connected_posts` | Get posts connected to a user |
+| `wp_list_connected_posts` | List all connections for a relationship |
+
+#### `shadow.py` - Shadow Taxonomy Tools
+
+Tools for the "shadow taxonomy" pattern where posts are related through taxonomy terms:
+
+| Tool | Description |
+|------|-------------|
+| `wp_list_shadow_taxonomies` | Discover shadow taxonomies |
+| `wp_get_shadow_related_posts` | Find posts related via shadow taxonomy |
+| `wp_get_shadow_source_post` | Get source post for a shadow term |
+| `wp_list_shadow_posts` | List all posts using shadow taxonomy |
+
 ## Data Flow
 
 ### Tool Invocation
@@ -170,7 +188,7 @@ Relationships include:
 ```
 1. MCP Client sends tool call request
    └─► 2. FastMCP routes to tool function
-       └─► 3. Pydantic validates input
+       └─► 3. FastMCP validates parameters via type annotations
            └─► 4. Tool gets pool from db.py
                └─► 5. SQL validated by validation.py
                    └─► 6. Query executed via db.query()
@@ -185,7 +203,7 @@ User Query
     │
     ▼
 ┌───────────────────┐
-│ Pydantic Model    │  Input validation (length, type, range)
+│ Parameter         │  Type validation via FastMCP
 │ Validation        │
 └─────────┬─────────┘
           │
@@ -308,6 +326,7 @@ Tests are in `tests/` using pytest:
 
 - `test_validation.py`: SQL validation logic tests
 - `test_helpers.py`: Utility function tests
+- `test_tools.py`: Tool registration, schema validation, and annotations
 
 Run with:
 
@@ -315,4 +334,4 @@ Run with:
 pytest
 ```
 
-CI runs on GitHub Actions for every push/PR.
+CI runs on GitHub Actions for Python 3.10, 3.11, and 3.12.
