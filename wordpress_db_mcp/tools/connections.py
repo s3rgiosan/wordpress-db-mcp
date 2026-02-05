@@ -7,18 +7,15 @@ WP Content Connect plugin (10up) to find connected posts and users.
 from __future__ import annotations
 
 import json
+from typing import Literal
 
 from mcp.server.fastmcp import Context
 
 from ..db import get_pool_and_prefix, query
-from ..models import (
-    ConnectedPostsInput,
-    ConnectedUsersInput,
-    ListConnectedPostsInput,
-    OutputFormat,
-    UserConnectedPostsInput,
-)
 from ..utils import clean_rows, handle_db_exception, resolve_prefix, rows_to_csv
+
+# Max rows constant
+MAX_ROWS = 1000
 
 
 def register_connection_tools(mcp):
@@ -34,7 +31,15 @@ def register_connection_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_get_connected_posts(params: ConnectedPostsInput, ctx: Context) -> str:
+    async def wp_get_connected_posts(
+        post_id: int,
+        name: str | None = None,
+        direction: Literal["from", "to", "any"] = "any",
+        site_id: int | None = None,
+        limit: int = 100,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Query posts connected via WP Content Connect post_to_post table.
 
         The post_to_post table stores relationships between posts with columns:
@@ -46,32 +51,37 @@ def register_connection_tools(mcp):
         - 'any': returns posts connected in either direction (default)
 
         Args:
-            params (ConnectedPostsInput): Post ID, relationship name, direction, and filters.
+            post_id: Source post ID.
+            name: Filter by relationship name (e.g., 'speakers', 'related_posts').
+            direction: Direction - 'from' (post_id is id1), 'to' (post_id is id2), 'any' (both).
+            site_id: Multisite blog ID (optional).
+            limit: Maximum number of results (default 100, max 1000).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Connected posts with relationship metadata in JSON or CSV.
         """
         pool, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
 
         args: list = []
 
         # Build the WHERE clause based on direction
-        if params.direction == "from":
+        if direction == "from":
             # post_id is id1, return id2 as connected posts
             where_clause = "pp.id1 = %s"
             join_condition = "p.ID = pp.id2"
-            args.append(params.post_id)
-        elif params.direction == "to":
+            args.append(post_id)
+        elif direction == "to":
             # post_id is id2, return id1 as connected posts
             where_clause = "pp.id2 = %s"
             join_condition = "p.ID = pp.id1"
-            args.append(params.post_id)
+            args.append(post_id)
         else:
             # any direction: post_id can be either id1 or id2
             where_clause = "(pp.id1 = %s OR pp.id2 = %s)"
             join_condition = "p.ID = CASE WHEN pp.id1 = %s THEN pp.id2 ELSE pp.id1 END"
-            args.extend([params.post_id, params.post_id, params.post_id])
+            args.extend([post_id, post_id, post_id])
 
         sql = (
             f"SELECT p.ID, p.post_title, p.post_type, p.post_status, "
@@ -81,26 +91,29 @@ def register_connection_tools(mcp):
             f"WHERE {where_clause}"
         )
 
-        if params.name:
+        if name:
             sql += " AND pp.name = %s"
-            args.append(params.name)
+            args.append(name)
 
         sql += " ORDER BY pp.`order`, p.post_title"
 
+        # Clamp limit to max
+        limit = min(limit, MAX_ROWS)
+
         try:
-            rows, has_more = await query(pool, sql, args, limit=params.limit)
+            rows, has_more = await query(pool, sql, args, limit=limit)
         except Exception as e:
             return handle_db_exception(e)
 
         cleaned = clean_rows(rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned)
 
         return json.dumps(
             {
-                "post_id": params.post_id,
-                "direction": params.direction,
+                "post_id": post_id,
+                "direction": direction,
                 "connected_posts": cleaned,
                 "has_more": has_more,
             },
@@ -117,20 +130,31 @@ def register_connection_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_get_connected_users(params: ConnectedUsersInput, ctx: Context) -> str:
+    async def wp_get_connected_users(
+        post_id: int,
+        name: str | None = None,
+        site_id: int | None = None,
+        limit: int = 100,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Query users connected to a post via WP Content Connect post_to_user table.
 
         The post_to_user table stores relationships between posts and users with columns:
         post_id, user_id, name (relationship type), user_order, post_order.
 
         Args:
-            params (ConnectedUsersInput): Post ID, relationship name, and filters.
+            post_id: Post ID.
+            name: Filter by relationship name.
+            site_id: Multisite blog ID (optional).
+            limit: Maximum number of results (default 100, max 1000).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Connected users with relationship metadata in JSON or CSV.
         """
         pool, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
 
         # Note: wp_users is always at base prefix (shared in multisite)
         sql = (
@@ -140,27 +164,30 @@ def register_connection_tools(mcp):
             f"JOIN `{prefix}users` u ON u.ID = pu.user_id "
             f"WHERE pu.post_id = %s"
         )
-        args: list = [params.post_id]
+        args: list = [post_id]
 
-        if params.name:
+        if name:
             sql += " AND pu.name = %s"
-            args.append(params.name)
+            args.append(name)
 
         sql += " ORDER BY pu.user_order, u.display_name"
 
+        # Clamp limit to max
+        limit = min(limit, MAX_ROWS)
+
         try:
-            rows, has_more = await query(pool, sql, args, limit=params.limit)
+            rows, has_more = await query(pool, sql, args, limit=limit)
         except Exception as e:
             return handle_db_exception(e)
 
         cleaned = clean_rows(rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned)
 
         return json.dumps(
             {
-                "post_id": params.post_id,
+                "post_id": post_id,
                 "connected_users": cleaned,
                 "has_more": has_more,
             },
@@ -178,7 +205,12 @@ def register_connection_tools(mcp):
         },
     )
     async def wp_get_user_connected_posts(
-        params: UserConnectedPostsInput, ctx: Context
+        user_id: int,
+        name: str | None = None,
+        site_id: int | None = None,
+        limit: int = 100,
+        format: str = "json",
+        ctx: Context = None,
     ) -> str:
         """Query posts connected to a user via WP Content Connect post_to_user table.
 
@@ -186,13 +218,17 @@ def register_connection_tools(mcp):
         find all posts connected to that user.
 
         Args:
-            params (UserConnectedPostsInput): User ID, relationship name, and filters.
+            user_id: User ID.
+            name: Filter by relationship name.
+            site_id: Multisite blog ID (optional).
+            limit: Maximum number of results (default 100, max 1000).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Connected posts with relationship metadata in JSON or CSV.
         """
         pool, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
 
         sql = (
             f"SELECT p.ID, p.post_title, p.post_type, p.post_status, "
@@ -201,27 +237,30 @@ def register_connection_tools(mcp):
             f"JOIN `{p}posts` p ON p.ID = pu.post_id "
             f"WHERE pu.user_id = %s"
         )
-        args: list = [params.user_id]
+        args: list = [user_id]
 
-        if params.name:
+        if name:
             sql += " AND pu.name = %s"
-            args.append(params.name)
+            args.append(name)
 
         sql += " ORDER BY pu.post_order, p.post_title"
 
+        # Clamp limit to max
+        limit = min(limit, MAX_ROWS)
+
         try:
-            rows, has_more = await query(pool, sql, args, limit=params.limit)
+            rows, has_more = await query(pool, sql, args, limit=limit)
         except Exception as e:
             return handle_db_exception(e)
 
         cleaned = clean_rows(rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned)
 
         return json.dumps(
             {
-                "user_id": params.user_id,
+                "user_id": user_id,
                 "connected_posts": cleaned,
                 "has_more": has_more,
             },
@@ -239,7 +278,11 @@ def register_connection_tools(mcp):
         },
     )
     async def wp_list_connected_posts(
-        params: ListConnectedPostsInput, ctx: Context
+        name: str,
+        site_id: int | None = None,
+        limit: int = 100,
+        format: str = "json",
+        ctx: Context = None,
     ) -> str:
         """List all post connections for a relationship name.
 
@@ -248,13 +291,16 @@ def register_connection_tools(mcp):
         a particular relationship.
 
         Args:
-            params (ListConnectedPostsInput): Relationship name and filters.
+            name: Relationship name to query (e.g., article-office).
+            site_id: Multisite blog ID (optional).
+            limit: Maximum number of results (default 100, max 1000).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: All connection pairs with both posts' details in JSON or CSV.
         """
         pool, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
 
         sql = (
             f"SELECT "
@@ -262,23 +308,26 @@ def register_connection_tools(mcp):
             f"p1.post_type AS from_post_type, "
             f"p2.ID AS to_post_id, p2.post_title AS to_post_title, "
             f"p2.post_type AS to_post_type, "
-            f"pp.`order` "
+            f"pp.`order` AS connection_order "
             f"FROM `{p}post_to_post` pp "
             f"JOIN `{p}posts` p1 ON p1.ID = pp.id1 "
             f"JOIN `{p}posts` p2 ON p2.ID = pp.id2 "
             f"WHERE pp.name = %s "
             f"ORDER BY pp.`order`, p1.post_title, p2.post_title"
         )
-        args: list = [params.name]
+        args: list = [name]
+
+        # Clamp limit to max
+        limit = min(limit, 1000)
 
         try:
-            rows, has_more = await query(pool, sql, args, limit=params.limit)
+            rows, has_more = await query(pool, sql, args, limit=limit)
         except Exception as e:
             return handle_db_exception(e)
 
         cleaned = clean_rows(rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned)
 
         # Transform flat rows into nested structure
@@ -295,12 +344,12 @@ def register_connection_tools(mcp):
                     "post_title": row["to_post_title"],
                     "post_type": row["to_post_type"],
                 },
-                "order": row["order"],
+                "order": row["connection_order"],
             })
 
         return json.dumps(
             {
-                "relationship_name": params.name,
+                "relationship_name": name,
                 "connections": connections,
                 "has_more": has_more,
             },

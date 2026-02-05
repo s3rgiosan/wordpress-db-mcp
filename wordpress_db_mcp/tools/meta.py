@@ -7,7 +7,6 @@ import json
 from mcp.server.fastmcp import Context
 
 from ..db import get_pool_and_prefix, query
-from ..models import CommentMetaInput, OutputFormat, PostMetaInput, UserMetaInput
 from ..utils import clean_rows, handle_db_exception, resolve_prefix, rows_to_csv
 
 
@@ -16,7 +15,7 @@ async def get_meta(
     id_column: str,
     entity_id: int,
     meta_key: str | None,
-    output_format: OutputFormat,
+    output_format: str,
     id_key: str,
 ) -> str:
     """Generic helper for fetching meta key-value pairs.
@@ -28,7 +27,7 @@ async def get_meta(
         id_column: Column name for the entity ID (e.g. 'post_id').
         entity_id: The ID of the entity to fetch meta for.
         meta_key: Optional meta_key filter (exact match or LIKE with %).
-        output_format: Output format (JSON or CSV).
+        output_format: Output format (json or csv).
         id_key: Key name for the ID in the JSON response (e.g. 'post_id').
 
     Returns:
@@ -55,7 +54,7 @@ async def get_meta(
 
     cleaned = clean_rows(rows)
 
-    if output_format == OutputFormat.CSV:
+    if output_format.lower() == "csv":
         return rows_to_csv(cleaned)
 
     return json.dumps({id_key: entity_id, "meta": cleaned}, indent=2)
@@ -74,26 +73,35 @@ def register_meta_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_get_post_meta(params: PostMetaInput, ctx: Context) -> str:
+    async def wp_get_post_meta(
+        post_id: int,
+        meta_key: str | None = None,
+        site_id: int | None = None,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Get all meta key-value pairs for a WordPress post.
 
         Returns postmeta rows. Optionally filter by meta_key.
         Useful for inspecting ACF fields, WooCommerce product data, SEO metadata, etc.
 
         Args:
-            params (PostMetaInput): Post ID and filters.
+            post_id: Post ID.
+            meta_key: Filter by meta_key (exact match or LIKE with %).
+            site_id: Multisite blog ID (optional).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Meta rows in JSON or CSV.
         """
         _, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
         return await get_meta(
             table=f"{p}postmeta",
             id_column="post_id",
-            entity_id=params.post_id,
-            meta_key=params.meta_key,
-            output_format=params.format,
+            entity_id=post_id,
+            meta_key=meta_key,
+            output_format=format,
             id_key="post_id",
         )
 
@@ -107,7 +115,12 @@ def register_meta_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_get_user_meta(params: UserMetaInput, ctx: Context) -> str:
+    async def wp_get_user_meta(
+        user_id: int,
+        meta_key: str | None = None,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Get all meta key-value pairs for a WordPress user.
 
         Returns usermeta rows. Optionally filter by meta_key.
@@ -116,7 +129,9 @@ def register_meta_tools(mcp):
         Note: In multisite, wp_users and wp_usermeta are shared across all sites.
 
         Args:
-            params (UserMetaInput): User ID and filters.
+            user_id: User ID.
+            meta_key: Filter by meta_key (exact match or LIKE with %).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Meta rows in JSON or CSV.
@@ -126,9 +141,9 @@ def register_meta_tools(mcp):
         return await get_meta(
             table=f"{prefix}usermeta",
             id_column="user_id",
-            entity_id=params.user_id,
-            meta_key=params.meta_key,
-            output_format=params.format,
+            entity_id=user_id,
+            meta_key=meta_key,
+            output_format=format,
             id_key="user_id",
         )
 
@@ -142,24 +157,33 @@ def register_meta_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_get_comment_meta(params: CommentMetaInput, ctx: Context) -> str:
+    async def wp_get_comment_meta(
+        comment_id: int,
+        meta_key: str | None = None,
+        site_id: int | None = None,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Get all meta key-value pairs for a WordPress comment.
 
         Returns commentmeta rows. Optionally filter by meta_key.
 
         Args:
-            params (CommentMetaInput): Comment ID and filters.
+            comment_id: Comment ID.
+            meta_key: Filter by meta_key (exact match or LIKE with %).
+            site_id: Multisite blog ID (optional).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Meta rows in JSON or CSV.
         """
         _, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
         return await get_meta(
             table=f"{p}commentmeta",
             id_column="comment_id",
-            entity_id=params.comment_id,
-            meta_key=params.meta_key,
-            output_format=params.format,
+            entity_id=comment_id,
+            meta_key=meta_key,
+            output_format=format,
             id_key="comment_id",
         )

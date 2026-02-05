@@ -75,7 +75,7 @@ class ListConnectedPostsInput(BaseModel):
 
     name: str = Field(
         ...,
-        description="Relationship name (e.g. 'related_articles').",
+        description="Relationship name to query (e.g., article-office).",
         max_length=64,
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")

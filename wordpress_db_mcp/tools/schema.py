@@ -8,7 +8,6 @@ from mcp.server.fastmcp import Context
 
 from ..config import DB_NAME, WP_CORE_SUFFIXES
 from ..db import get_pool_and_prefix, query
-from ..models import DescribeTableInput, GetSchemaInput, ListTablesInput, OutputFormat
 from ..utils import (
     clean_rows,
     error_response,
@@ -33,21 +32,26 @@ def register_schema_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_list_tables(params: ListTablesInput, ctx: Context) -> str:
+    async def wp_list_tables(
+        site_id: int | None = None,
+        filter: str | None = None,
+        ctx: Context = None,
+    ) -> str:
         """List all tables in the WordPress database.
 
         Returns table names, engines, row counts and sizes.
         Supports multisite by specifying site_id.
 
         Args:
-            params (ListTablesInput): Filtering options.
+            site_id: Multisite blog ID (optional).
+            filter: Filter tables by name pattern (LIKE syntax with %).
 
         Returns:
             str: JSON array of table metadata.
         """
         try:
             pool, prefix = get_pool_and_prefix()
-            site_prefix = resolve_prefix(prefix, params.site_id)
+            site_prefix = resolve_prefix(prefix, site_id)
 
             sql = (
                 "SELECT TABLE_NAME, ENGINE, TABLE_ROWS, "
@@ -58,9 +62,9 @@ def register_schema_tools(mcp):
             )
             args = [DB_NAME]
 
-            if params.filter:
+            if filter:
                 sql += " AND TABLE_NAME LIKE %s"
-                args.append(params.filter)
+                args.append(filter)
             else:
                 sql += " AND TABLE_NAME LIKE %s"
                 args.append(f"{site_prefix}%")
@@ -82,22 +86,29 @@ def register_schema_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_describe_table(params: DescribeTableInput, ctx: Context) -> str:
+    async def wp_describe_table(
+        table: str,
+        site_id: int | None = None,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Show column definitions, keys, and indexes for a table.
 
         Accepts either a full table name (e.g. 'wp_posts') or a core suffix
         (e.g. 'posts'), which will be resolved using the detected prefix.
 
         Args:
-            params (DescribeTableInput): Table name and options.
+            table: Table name or core suffix (e.g., posts, postmeta, users).
+            site_id: Multisite blog ID (optional).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Column definitions in JSON or CSV.
         """
         try:
             pool, prefix = get_pool_and_prefix()
-            site_prefix = resolve_prefix(prefix, params.site_id)
-            table = resolve_table(site_prefix, params.table)
+            site_prefix = resolve_prefix(prefix, site_id)
+            resolved_table = resolve_table(site_prefix, table)
 
             # Columns
             col_sql = (
@@ -107,9 +118,11 @@ def register_schema_tools(mcp):
                 "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s "
                 "ORDER BY ORDINAL_POSITION"
             )
-            cols, _ = await query(pool, col_sql, (DB_NAME, table))
+            cols, _ = await query(pool, col_sql, (DB_NAME, resolved_table))
             if not cols:
-                return error_response(f"Table '{table}' not found.", "table_not_found")
+                return error_response(
+                    f"Table '{resolved_table}' not found.", "table_not_found"
+                )
 
             # Indexes
             idx_sql = (
@@ -118,15 +131,15 @@ def register_schema_tools(mcp):
                 "WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s "
                 "ORDER BY INDEX_NAME, SEQ_IN_INDEX"
             )
-            idxs, _ = await query(pool, idx_sql, (DB_NAME, table))
+            idxs, _ = await query(pool, idx_sql, (DB_NAME, resolved_table))
 
             result = {
-                "table": table,
+                "table": resolved_table,
                 "columns": clean_rows(cols),
                 "indexes": clean_rows(idxs),
             }
 
-            if params.format == OutputFormat.CSV:
+            if format.lower() == "csv":
                 return rows_to_csv(cols)
 
             return json.dumps(result, indent=2)
@@ -143,7 +156,12 @@ def register_schema_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_get_schema(params: GetSchemaInput, ctx: Context) -> str:
+    async def wp_get_schema(
+        site_id: int | None = None,
+        include_plugins: bool = False,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Generate a complete schema of the WordPress database.
 
         Includes all tables, columns, indexes and detected relationships.
@@ -152,14 +170,16 @@ def register_schema_tools(mcp):
         Uses batched queries for performance (2 queries instead of 2N).
 
         Args:
-            params (GetSchemaInput): Schema generation options.
+            site_id: Multisite blog ID (optional).
+            include_plugins: Include plugin tables (default False, core only).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Full schema in JSON or CSV format.
         """
         try:
             pool, prefix = get_pool_and_prefix()
-            site_prefix = resolve_prefix(prefix, params.site_id)
+            site_prefix = resolve_prefix(prefix, site_id)
 
             # Get all tables for this prefix
             tables_sql = (
@@ -172,7 +192,7 @@ def register_schema_tools(mcp):
             )
             all_tables = [r["TABLE_NAME"] for r in table_rows]
 
-            if not params.include_plugins:
+            if not include_plugins:
                 core_tables = {f"{site_prefix}{s}" for s in WP_CORE_SUFFIXES}
                 all_tables = [t for t in all_tables if t in core_tables]
 
@@ -236,7 +256,7 @@ def register_schema_tools(mcp):
                 "relationships": relationships,
             }
 
-            if params.format == OutputFormat.CSV:
+            if format.lower() == "csv":
                 # Flatten all columns into one CSV
                 flat = []
                 for tname, tdata in schema.items():

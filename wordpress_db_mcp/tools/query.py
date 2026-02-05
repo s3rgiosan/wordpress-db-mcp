@@ -7,8 +7,10 @@ import json
 from mcp.server.fastmcp import Context
 
 from ..db import get_pool_and_prefix, query
-from ..models import OutputFormat, QueryInput, SearchPostsInput
 from ..utils import clean_rows, handle_db_exception, resolve_prefix, rows_to_csv
+
+# Max rows constant
+MAX_ROWS = 1000
 
 
 def register_query_tools(mcp):
@@ -24,7 +26,12 @@ def register_query_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_query(params: QueryInput, ctx: Context) -> str:
+    async def wp_query(
+        sql: str,
+        limit: int = 100,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Execute a read-only SQL query against the WordPress database.
 
         Only SELECT, SHOW, DESCRIBE and EXPLAIN statements are allowed.
@@ -32,27 +39,32 @@ def register_query_tools(mcp):
         Queries timeout after the configured limit (default 30s).
 
         Args:
-            params (QueryInput): SQL query and options.
+            sql: SQL query (SELECT, SHOW, DESCRIBE, or EXPLAIN only).
+            limit: Maximum number of results (default 100, max 1000).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Query results in JSON or CSV format.
         """
         pool, _ = get_pool_and_prefix()
 
+        # Clamp limit to max
+        limit = min(limit, MAX_ROWS)
+
         try:
-            rows, has_more = await query(pool, params.sql, limit=params.limit)
+            rows, has_more = await query(pool, sql, limit=limit)
         except Exception as e:
             return handle_db_exception(e)
 
         cleaned = clean_rows(rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned)
 
         result = {
             "row_count": len(cleaned),
             "has_more": has_more,
-            "limit": params.limit,
+            "limit": limit,
             "rows": cleaned,
         }
         return json.dumps(result, indent=2)
@@ -67,26 +79,37 @@ def register_query_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_search_posts(params: SearchPostsInput, ctx: Context) -> str:
+    async def wp_search_posts(
+        search: str,
+        post_type: str | None = None,
+        post_status: str | None = None,
+        site_id: int | None = None,
+        limit: int = 100,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """Search for posts by title or content.
 
         Performs a LIKE search against post_title and post_content.
         Optionally filter by post_type and post_status.
 
         Args:
-            params (SearchPostsInput): Search term and filters.
+            search: Search term.
+            post_type: Filter by post type (e.g., post, page, product).
+            post_status: Filter by post status (e.g., publish, draft).
+            site_id: Multisite blog ID (optional).
+            limit: Maximum number of results (default 100, max 1000).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Matching posts in JSON or CSV.
         """
         pool, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
 
         # Escape LIKE wildcards in user input, then wrap with %
         search_term = (
-            params.search.replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
+            search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         )
         search_pattern = f"%{search_term}%"
 
@@ -98,29 +121,32 @@ def register_query_tools(mcp):
         )
         args: list = [search_pattern, search_pattern]
 
-        if params.post_type:
+        if post_type:
             sql += " AND post_type = %s"
-            args.append(params.post_type)
+            args.append(post_type)
 
-        if params.post_status:
+        if post_status:
             sql += " AND post_status = %s"
-            args.append(params.post_status)
+            args.append(post_status)
 
         sql += " ORDER BY post_date DESC"
 
+        # Clamp limit to max
+        limit = min(limit, MAX_ROWS)
+
         try:
-            rows, has_more = await query(pool, sql, args, limit=params.limit)
+            rows, has_more = await query(pool, sql, args, limit=limit)
         except Exception as e:
             return handle_db_exception(e)
 
         cleaned = clean_rows(rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned)
 
         return json.dumps(
             {
-                "search": params.search,
+                "search": search,
                 "posts": cleaned,
                 "has_more": has_more,
             },

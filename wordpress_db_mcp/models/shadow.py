@@ -55,12 +55,12 @@ class ListShadowPostsInput(BaseModel):
 
     taxonomy: str = Field(
         ...,
-        description="Shadow taxonomy name (e.g. 'speaker_shadow').",
+        description="Shadow taxonomy name to query.",
         max_length=100,
     )
     meta_key: str = Field(
         ...,
-        description="Term meta key storing the post ID (e.g. 'shadow_post_id').",
+        description="Term meta key storing the post ID.",
         max_length=255,
     )
     site_id: int | None = Field(default=None, description="Multisite blog ID.")

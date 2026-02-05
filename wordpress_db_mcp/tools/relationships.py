@@ -9,7 +9,6 @@ from mcp.server.fastmcp import Context
 
 from ..config import DB_NAME
 from ..db import get_pool_and_prefix, query
-from ..models import GetRelationshipsInput
 from ..utils import get_multisite_prefixes, handle_db_exception, resolve_prefix
 
 
@@ -176,7 +175,8 @@ def register_relationship_tools(mcp):
         },
     )
     async def wp_get_relationships(
-        params: GetRelationshipsInput, ctx: Context
+        site_id: int | None = None,
+        ctx: Context = None,
     ) -> str:
         """Map how WordPress posts, terms, users, and meta are related.
 
@@ -189,14 +189,14 @@ def register_relationship_tools(mcp):
         - terms <-> termmeta (via term_id)
 
         Args:
-            params (GetRelationshipsInput): Site ID for multisite.
+            site_id: Multisite blog ID (optional).
 
         Returns:
             str: JSON describing all relationships.
         """
         try:
             pool, prefix = get_pool_and_prefix()
-            site_prefix = resolve_prefix(prefix, params.site_id)
+            site_prefix = resolve_prefix(prefix, site_id)
 
             # Get actual tables
             tables_sql = (

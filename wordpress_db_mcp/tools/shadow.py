@@ -15,13 +15,10 @@ import json
 from mcp.server.fastmcp import Context
 
 from ..db import get_pool_and_prefix, query
-from ..models import (
-    ListShadowPostsInput,
-    OutputFormat,
-    ShadowRelatedPostsInput,
-    ShadowSourcePostInput,
-)
 from ..utils import clean_rows, handle_db_exception, resolve_prefix, rows_to_csv
+
+# Max rows constant
+MAX_ROWS = 1000
 
 
 def register_shadow_tools(mcp):
@@ -38,7 +35,13 @@ def register_shadow_tools(mcp):
         },
     )
     async def wp_get_shadow_related_posts(
-        params: ShadowRelatedPostsInput, ctx: Context
+        post_id: int,
+        taxonomy: str,
+        meta_key: str,
+        site_id: int | None = None,
+        limit: int = 100,
+        format: str = "json",
+        ctx: Context = None,
     ) -> str:
         """Find posts related via a shadow taxonomy.
 
@@ -50,13 +53,18 @@ def register_shadow_tools(mcp):
         This tool finds all posts that share shadow terms with the source post.
 
         Args:
-            params (ShadowRelatedPostsInput): Post ID, taxonomy, meta_key, and filters.
+            post_id: Source post ID.
+            taxonomy: Shadow taxonomy name.
+            meta_key: Term meta key that stores the source post ID.
+            site_id: Multisite blog ID (optional).
+            limit: Maximum number of results (default 100, max 1000).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: Related posts with their connecting shadow terms in JSON or CSV.
         """
         pool, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
 
         # Step 1: Find shadow terms for this post (terms where meta_key = post_id)
         sql_terms = (
@@ -67,7 +75,7 @@ def register_shadow_tools(mcp):
             f"WHERE tm.meta_key = %s AND tm.meta_value = %s "
             f"AND tt.taxonomy = %s"
         )
-        args_terms = [params.meta_key, str(params.post_id), params.taxonomy]
+        args_terms = [meta_key, str(post_id), taxonomy]
 
         try:
             term_rows, _ = await query(pool, sql_terms, args_terms)
@@ -75,12 +83,12 @@ def register_shadow_tools(mcp):
             return handle_db_exception(e)
 
         if not term_rows:
-            if params.format == OutputFormat.CSV:
+            if format.lower() == "csv":
                 return ""
             return json.dumps(
                 {
-                    "post_id": params.post_id,
-                    "taxonomy": params.taxonomy,
+                    "post_id": post_id,
+                    "taxonomy": taxonomy,
                     "shadow_terms": [],
                     "related_posts": [],
                 },
@@ -103,25 +111,26 @@ def register_shadow_tools(mcp):
             f"AND p.ID != %s "
             f"ORDER BY p.post_title"
         )
-        args_posts = term_ids + [params.post_id]
+        args_posts = term_ids + [post_id]
+
+        # Clamp limit to max
+        limit = min(limit, MAX_ROWS)
 
         try:
-            post_rows, has_more = await query(
-                pool, sql_posts, args_posts, limit=params.limit
-            )
+            post_rows, has_more = await query(pool, sql_posts, args_posts, limit=limit)
         except Exception as e:
             return handle_db_exception(e)
 
         cleaned_terms = clean_rows(term_rows)
         cleaned_posts = clean_rows(post_rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned_posts)
 
         return json.dumps(
             {
-                "post_id": params.post_id,
-                "taxonomy": params.taxonomy,
+                "post_id": post_id,
+                "taxonomy": taxonomy,
                 "shadow_terms": cleaned_terms,
                 "related_posts": cleaned_posts,
                 "has_more": has_more,
@@ -140,7 +149,11 @@ def register_shadow_tools(mcp):
         },
     )
     async def wp_get_shadow_source_post(
-        params: ShadowSourcePostInput, ctx: Context
+        term_id: int,
+        meta_key: str,
+        site_id: int | None = None,
+        format: str = "json",
+        ctx: Context = None,
     ) -> str:
         """Get the source post that a shadow term represents.
 
@@ -149,13 +162,16 @@ def register_shadow_tools(mcp):
         the reverse lookup: given a term ID, find the source post.
 
         Args:
-            params (ShadowSourcePostInput): Term ID, meta_key, and filters.
+            term_id: Term ID.
+            meta_key: Term meta key that stores the source post ID.
+            site_id: Multisite blog ID (optional).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: The source post in JSON or CSV.
         """
         pool, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
 
         sql = (
             f"SELECT p.ID, p.post_title, p.post_type, p.post_status, p.post_date, "
@@ -165,7 +181,7 @@ def register_shadow_tools(mcp):
             f"JOIN `{p}posts` p ON CAST(tm.meta_value AS UNSIGNED) = p.ID "
             f"WHERE tm.term_id = %s AND tm.meta_key = %s"
         )
-        args = [params.term_id, params.meta_key]
+        args = [term_id, meta_key]
 
         try:
             rows, _ = await query(pool, sql, args, limit=1)
@@ -174,13 +190,13 @@ def register_shadow_tools(mcp):
 
         cleaned = clean_rows(rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned)
 
         if not cleaned:
             return json.dumps(
                 {
-                    "term_id": params.term_id,
+                    "term_id": term_id,
                     "source_post": None,
                 },
                 indent=2,
@@ -188,7 +204,7 @@ def register_shadow_tools(mcp):
 
         return json.dumps(
             {
-                "term_id": params.term_id,
+                "term_id": term_id,
                 "source_post": cleaned[0],
             },
             indent=2,
@@ -204,7 +220,14 @@ def register_shadow_tools(mcp):
             "openWorldHint": False,
         },
     )
-    async def wp_list_shadow_posts(params: ListShadowPostsInput, ctx: Context) -> str:
+    async def wp_list_shadow_posts(
+        taxonomy: str,
+        meta_key: str,
+        site_id: int | None = None,
+        limit: int = 100,
+        format: str = "json",
+        ctx: Context = None,
+    ) -> str:
         """List all posts using a shadow taxonomy relationship.
 
         Returns all posts assigned to terms in the shadow taxonomy, along with
@@ -212,13 +235,17 @@ def register_shadow_tools(mcp):
         overview of all content using a particular shadow taxonomy relationship.
 
         Args:
-            params (ListShadowPostsInput): Taxonomy, meta_key, and filters.
+            taxonomy: Shadow taxonomy name.
+            meta_key: Term meta key that stores the source post ID.
+            site_id: Multisite blog ID (optional).
+            limit: Maximum number of results (default 100, max 1000).
+            format: Output format - json or csv (default json).
 
         Returns:
             str: All posts with their shadow term and source post info in JSON or CSV.
         """
         pool, prefix = get_pool_and_prefix()
-        p = resolve_prefix(prefix, params.site_id)
+        p = resolve_prefix(prefix, site_id)
 
         # Query posts assigned to shadow terms, joining to get source post info
         sql = (
@@ -236,22 +263,25 @@ def register_shadow_tools(mcp):
             f"WHERE tt.taxonomy = %s "
             f"ORDER BY source.post_title, p.post_title"
         )
-        args: list = [params.meta_key, params.taxonomy]
+        args: list = [meta_key, taxonomy]
+
+        # Clamp limit to max
+        limit = min(limit, MAX_ROWS)
 
         try:
-            rows, has_more = await query(pool, sql, args, limit=params.limit)
+            rows, has_more = await query(pool, sql, args, limit=limit)
         except Exception as e:
             return handle_db_exception(e)
 
         cleaned = clean_rows(rows)
 
-        if params.format == OutputFormat.CSV:
+        if format.lower() == "csv":
             return rows_to_csv(cleaned)
 
         return json.dumps(
             {
-                "taxonomy": params.taxonomy,
-                "meta_key": params.meta_key,
+                "taxonomy": taxonomy,
+                "meta_key": meta_key,
                 "posts": cleaned,
                 "has_more": has_more,
             },
