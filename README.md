@@ -37,7 +37,7 @@ No installation required when using `uvx`. The MCP server is installed automatic
 Alternatively, install manually:
 
 ```bash
-pip install git+https://github.com/s3rgiosan/wordpress-db-mcp
+pip install wordpress-db-mcp
 ```
 
 ## Database User Setup (recommended)
@@ -77,7 +77,7 @@ Add to your MCP settings JSON:
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/s3rgiosan/wordpress-db-mcp",
+        "wordpress-db-mcp",
         "wordpress-db-mcp"
       ],
       "env": {
@@ -100,7 +100,7 @@ claude mcp add wordpress-db \
   -e WP_DB_USER=wp_mcp_reader \
   -e WP_DB_PASSWORD=secret \
   -e WP_DB_NAME=mysite \
-  -- uvx --from git+https://github.com/s3rgiosan/wordpress-db-mcp wordpress-db-mcp
+  -- uvx --from wordpress-db-mcp wordpress-db-mcp
 ```
 
 ### Local by Flywheel (Socket Connection)
@@ -114,7 +114,7 @@ Local uses Unix sockets. Find your socket path in Local's site info (Database ta
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/s3rgiosan/wordpress-db-mcp",
+        "wordpress-db-mcp",
         "wordpress-db-mcp"
       ],
       "env": {
@@ -337,4 +337,4 @@ Use `wp_query` to explore any table directly.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT
