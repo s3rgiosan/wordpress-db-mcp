@@ -151,7 +151,5 @@ async def query(
             return rows, has_more
     except aiomysql.OperationalError as e:
         raise RuntimeError(f"Database connection error: {e}") from e
-    except aiomysql.PoolError as e:
-        raise RuntimeError(f"Connection pool exhausted: {e}") from e
     except aiomysql.MySQLError as e:
         raise RuntimeError(f"Database error: {e}") from e

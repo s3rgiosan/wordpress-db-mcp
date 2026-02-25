@@ -102,11 +102,6 @@ def handle_db_exception(e: Exception) -> str:
     """
     if isinstance(e, asyncio.TimeoutError):
         return error_response(f"Query timed out after {QUERY_TIMEOUT}s.", "timeout")
-    if isinstance(e, aiomysql.PoolError):
-        logger.error("Pool exhausted: %s", e)
-        return error_response(
-            "Database connection pool exhausted. Try again later.", "pool_exhausted"
-        )
     if isinstance(e, aiomysql.OperationalError):
         logger.error("Operational error: %s", e)
         return error_response("Database connection error.", "connection_error")

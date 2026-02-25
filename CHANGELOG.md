@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Remove references to non-existent `aiomysql.PoolError` that caused `AttributeError` when handling database exceptions
+
 ## [1.0.0] - 2025-02-04
 
 ### Added

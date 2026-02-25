@@ -283,7 +283,6 @@ Specific exception handling for better error messages:
 | Exception | Error Code | Message |
 |-----------|------------|---------|
 | `asyncio.TimeoutError` | `timeout` | Query timed out after Ns |
-| `aiomysql.PoolError` | `pool_exhausted` | Connection pool exhausted |
 | `aiomysql.OperationalError` | `connection_error` | Database connection error |
 | `aiomysql.MySQLError` | `query_error` | Database query failed |
 | `RuntimeError` | `runtime_error` | (Pass-through message) |
