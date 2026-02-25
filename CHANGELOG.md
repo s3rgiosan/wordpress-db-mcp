@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2025-02-25
+
+### Added
+
+- Package now available on [PyPI](https://pypi.org/project/wordpress-db-mcp/) for easier installation via `pip install wordpress-db-mcp`
+- GitHub Actions workflow to auto-publish to PyPI on new releases
+
 ### Fixed
 
 - Remove references to non-existent `aiomysql.PoolError` that caused `AttributeError` when handling database exceptions
@@ -68,5 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Password warning when WP_DB_PASSWORD is not set
 - Sanitized error messages to prevent information disclosure
 
-[Unreleased]: https://github.com/s3rgiosan/wordpress-db-mcp/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/s3rgiosan/wordpress-db-mcp/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/s3rgiosan/wordpress-db-mcp/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/s3rgiosan/wordpress-db-mcp/releases/tag/v1.0.0
