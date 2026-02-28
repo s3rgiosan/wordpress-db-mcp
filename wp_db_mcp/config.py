@@ -1,4 +1,4 @@
-"""Configuration and constants for the WordPress Database MCP Server."""
+"""Configuration and constants for the WP Database MCP Server."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ WP_CORE_SUFFIXES = [
 # Logging
 # ---------------------------------------------------------------------------
 
-logger = logging.getLogger("wordpress_db_mcp")
+logger = logging.getLogger("wp_db_mcp")
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
 # Security warning for empty password

@@ -1,1 +1,1 @@
-# Tests for wordpress-db-mcp
+# Tests for wp-db-mcp

@@ -33,7 +33,7 @@ jobs:
 
       - name: Run type checker
         run: |
-          mypy wordpress_db_mcp --ignore-missing-imports
+          mypy wp_db_mcp --ignore-missing-imports
 
       - name: Run tests
         run: |

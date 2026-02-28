@@ -1,4 +1,4 @@
-# WordPress Database MCP Server
+# WP Database MCP Server
 
 Read-only MCP server for exploring WordPress MySQL/MariaDB databases. Provides schema inspection, relationship mapping, and safe SQL querying.
 
@@ -37,7 +37,7 @@ No installation required when using `uvx`. The MCP server is installed automatic
 Alternatively, install manually:
 
 ```bash
-pip install wordpress-db-mcp
+pip install wp-db-mcp
 ```
 
 ## Database User Setup (recommended)
@@ -73,12 +73,12 @@ Add to your MCP settings JSON:
 ```json
 {
   "mcpServers": {
-    "wordpress-db": {
+    "wp-db": {
       "command": "uvx",
       "args": [
         "--from",
-        "wordpress-db-mcp",
-        "wordpress-db-mcp"
+        "wp-db-mcp",
+        "wp-db-mcp"
       ],
       "env": {
         "WP_DB_HOST": "127.0.0.1",
@@ -95,12 +95,12 @@ Add to your MCP settings JSON:
 ### Claude Code
 
 ```bash
-claude mcp add wordpress-db \
+claude mcp add wp-db \
   -e WP_DB_HOST=127.0.0.1 \
   -e WP_DB_USER=wp_mcp_reader \
   -e WP_DB_PASSWORD=secret \
   -e WP_DB_NAME=mysite \
-  -- uvx --from wordpress-db-mcp wordpress-db-mcp
+  -- uvx --from wp-db-mcp wp-db-mcp
 ```
 
 ### Local by Flywheel (Socket Connection)
@@ -110,12 +110,12 @@ Local uses Unix sockets. Find your socket path in Local's site info (Database ta
 ```json
 {
   "mcpServers": {
-    "wordpress-db": {
+    "wp-db": {
       "command": "uvx",
       "args": [
         "--from",
-        "wordpress-db-mcp",
-        "wordpress-db-mcp"
+        "wp-db-mcp",
+        "wp-db-mcp"
       ],
       "env": {
         "WP_DB_SOCKET": "/Users/you/Library/Application Support/Local/run/XXXXXXXX/mysql/mysqld.sock",

@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-02-28
+
+### Changed
+
+- Rename package from `wordpress-db-mcp` to `wp-db-mcp`
+- Rename Python module from `wordpress_db_mcp` to `wp_db_mcp`
+
 ## [1.0.1] - 2025-02-25
 
 ### Added
 
-- Package now available on [PyPI](https://pypi.org/project/wordpress-db-mcp/) for easier installation via `pip install wordpress-db-mcp`
+- Package now available on [PyPI](https://pypi.org/project/wp-db-mcp/) for easier installation via `pip install wp-db-mcp`
 - GitHub Actions workflow to auto-publish to PyPI on new releases
 
 ### Fixed
@@ -22,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of WordPress Database MCP Server
+- Initial release of WP Database MCP Server
 - Read-only database exploration tools:
   - `wp_list_tables` - List all tables with metadata
   - `wp_describe_table` - Show column definitions and indexes
@@ -75,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Password warning when WP_DB_PASSWORD is not set
 - Sanitized error messages to prevent information disclosure
 
-[Unreleased]: https://github.com/s3rgiosan/wordpress-db-mcp/compare/v1.0.1...HEAD
-[1.0.1]: https://github.com/s3rgiosan/wordpress-db-mcp/compare/v1.0.0...v1.0.1
-[1.0.0]: https://github.com/s3rgiosan/wordpress-db-mcp/releases/tag/v1.0.0
+[Unreleased]: https://github.com/s3rgiosan/wp-db-mcp/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/s3rgiosan/wp-db-mcp/compare/v1.0.1...v1.1.0
+[1.0.1]: https://github.com/s3rgiosan/wp-db-mcp/compare/v1.0.0...v1.0.1
+[1.0.0]: https://github.com/s3rgiosan/wp-db-mcp/releases/tag/v1.0.0

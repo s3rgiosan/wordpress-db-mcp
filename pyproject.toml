@@ -1,13 +1,13 @@
 [project]
-name = "wordpress-db-mcp"
-version = "1.0.1"
+name = "wp-db-mcp"
+version = "1.1.0"
 description = "MCP server for read-only WordPress MySQL/MariaDB database exploration"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "Sérgio Santos", email = "me@s3rgiosan.com"},
 ]
-keywords = ["mcp", "wordpress", "mysql", "database", "model-context-protocol"]
+keywords = ["mcp", "wordpress", "wp", "mysql", "database", "model-context-protocol"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -37,12 +37,12 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/s3rgiosan/wordpress-db-mcp"
-Repository = "https://github.com/s3rgiosan/wordpress-db-mcp"
-Issues = "https://github.com/s3rgiosan/wordpress-db-mcp/issues"
+Homepage = "https://github.com/s3rgiosan/wp-db-mcp"
+Repository = "https://github.com/s3rgiosan/wp-db-mcp"
+Issues = "https://github.com/s3rgiosan/wp-db-mcp/issues"
 
 [project.scripts]
-wordpress-db-mcp = "wordpress_db_mcp:main"
+wp-db-mcp = "wp_db_mcp:main"
 
 [build-system]
 requires = ["setuptools>=68.0"]

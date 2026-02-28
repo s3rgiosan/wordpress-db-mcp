@@ -2,7 +2,7 @@
 
 import pytest
 
-from wordpress_db_mcp.validation import validate_select_only
+from wp_db_mcp.validation import validate_select_only
 
 
 class TestValidateSelectOnly:

@@ -1,4 +1,4 @@
-"""WordPress Database MCP Server.
+"""WP Database MCP Server.
 
 A read-only MCP server for exploring WordPress/WooCommerce MySQL/MariaDB databases.
 Provides schema inspection, relationship mapping, and safe SQL querying.

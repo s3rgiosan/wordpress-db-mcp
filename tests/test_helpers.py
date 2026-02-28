@@ -3,7 +3,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from wordpress_db_mcp.utils import (
+from wp_db_mcp.utils import (
     clean_rows,
     error_response,
     get_multisite_prefixes,

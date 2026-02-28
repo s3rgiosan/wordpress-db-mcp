@@ -1,15 +1,15 @@
 # Architecture
 
-This document describes the architecture of the WordPress Database MCP Server.
+This document describes the architecture of the WP Database MCP Server.
 
 ## Overview
 
-The WordPress Database MCP Server is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that provides read-only access to WordPress MySQL/MariaDB databases. It exposes a set of tools that AI assistants can use to explore database schemas, inspect relationships, and execute safe SQL queries.
+The WP Database MCP Server is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that provides read-only access to WordPress MySQL/MariaDB databases. It exposes a set of tools that AI assistants can use to explore database schemas, inspect relationships, and execute safe SQL queries.
 
 ```
 ┌─────────────────────┐     MCP Protocol      ┌─────────────────────┐
 │                     │◄────────────────────►│                     │
-│    MCP Client       │    (stdio/JSON-RPC)   │  WordPress DB MCP   │
+│    MCP Client       │    (stdio/JSON-RPC)   │    WP DB MCP        │
 │  (Claude, Cursor,   │                       │      Server         │
 │    VS Code, etc.)   │                       │                     │
 └─────────────────────┘                       └──────────┬──────────┘
@@ -106,13 +106,13 @@ from mcp.server.fastmcp import FastMCP
 from .db import app_lifespan
 from .tools import register_all_tools
 
-mcp = FastMCP("wordpress_db_mcp", lifespan=app_lifespan)
+mcp = FastMCP("wp_db_mcp", lifespan=app_lifespan)
 register_all_tools(mcp)
 ```
 
 ### Tools Module
 
-Tools are organized by domain in `wordpress_db_mcp/tools/`:
+Tools are organized by domain in `wp_db_mcp/tools/`:
 
 #### `schema.py` - Schema Inspection
 

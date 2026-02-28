@@ -1,6 +1,6 @@
 """Tests for MCP tool registration and schemas."""
 
-from wordpress_db_mcp.server import mcp
+from wp_db_mcp.server import mcp
 
 
 class TestToolRegistration:
